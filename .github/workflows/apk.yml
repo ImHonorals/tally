@@ -21,8 +21,15 @@ jobs:
       - name: Build Web Assets
         run: npm run build --if-present
 
+      - name: Show Directory Contents
+        run: ls -la
+
       - name: Upload Build Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: tally-app-files
-          path: www/
+          name: tally-built-app
+          path: |
+            dist/
+            build/
+            www/
+            index.html
