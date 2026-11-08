@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#2347D8">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>Tally</title>
+<style>
+:root{--bg:#EEF1F7;--card:#fff;--ink:#0F1B2D;--mute:#5B6678;--line:#D5DBE7;--accent:#2347D8;--on:#fff;--dot:#E3E8F2;
+color-scheme:light dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+:root:not([data-x]){}
+@media (prefers-color-scheme:dark){:root{--bg:#0C1220;--card:#151D30;--ink:#EAF0FF;--mute:#9AA6BD;--line:#26314A;--accent:#6F8BFF;--on:#0C1220;--dot:#222C45}}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:16px/1.4 ui-rounded,"SF Pro Rounded",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;min-height:100vh}
+main{max-width:560px;margin:0 auto;padding:20px 16px 120px}
+header{padding:12px 4px 18px}
+#date{margin:0;color:var(--mute);font-size:15px}
+h1{margin:2px 0 14px;font-size:34px;line-height:1.1;letter-spacing:-.02em}
+.track{height:8px;border-radius:99px;background:var(--dot);overflow:hidden}
+#bar{height:100%;width:0;background:var(--accent);border-radius:99px;transition:width .35s ease}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none;-webkit-tap-highlight-color:transparent}
+button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.habit{display:flex;gap:14px;align-items:flex-start;background:var(--card);border:1px solid var(--line);border-radius:20px;padding:16px;margin-bottom:12px}
+.check{flex:none;width:56px;height:56px;border-radius:50%;border:3px solid var(--accent);position:relative;transition:background .15s,transform .15s}
+.check:active{transform:scale(.92)}
+.done .check{background:var(--accent)}
+.done .check::after{content:"";position:absolute;left:19px;top:9px;width:12px;height:24px;border:solid var(--on);border-width:0 4px 4px 0;transform:rotate(45deg)}
+.meta{flex:1;min-width:0}
+h2{margin:0;font-size:19px;overflow-wrap:anywhere}
+.stats{display:flex;gap:14px;margin:2px 0 10px;color:var(--mute);font-size:14px}
+.week{display:flex;gap:6px}
+.day{width:30px;height:30px;border-radius:9px;background:var(--dot);font-size:12px;color:var(--mute)}
+.day.on{background:var(--accent);color:var(--on);font-weight:700}
+.day.today{box-shadow:0 0 0 2px var(--ink) inset}
+.more{flex:none;width:40px;height:40px;border-radius:12px;font-size:22px;color:var(--mute)}
+.empty{color:var(--mute);padding:28px 8px;font-size:17px}
+.add{position:fixed;left:0;right:0;bottom:0;padding:12px 16px calc(12px + env(safe-area-inset-bottom,0px));background:linear-gradient(transparent,var(--bg) 35%)}
+.add button{display:block;width:100%;max-width:528px;margin:0 auto;padding:16px;border-radius:16px;background:var(--accent);color:var(--on);font-weight:700;font-size:17px}
+.tools{display:flex;gap:10px;flex-wrap:wrap;margin-top:24px}
+.tools button{padding:10px 14px;border-radius:12px;border:1px solid var(--line);color:var(--mute);font-size:14px}
+dialog{border:0;border-radius:22px;padding:22px;width:min(92vw,420px);background:var(--card);color:var(--ink)}
+dialog::backdrop{background:rgba(5,10,25,.55)}
+dialog h3{margin:0 0 12px;font-size:20px}
+input[type=text]{width:100%;padding:14px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:inherit}
+.row{display:flex;gap:10px;margin-top:16px}
+.row button{flex:1;padding:13px;border-radius:12px;border:1px solid var(--line);font-weight:600}
+.row .pri{background:var(--accent);border-color:var(--accent);color:var(--on)}
+.row .del{color:#D93636;border-color:#D93636}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <p id="date"></p>
+    <h1 id="sum"></h1>
+    <div class="track"><div id="bar"></div></div>
+  </header>
+  <section id="list" aria-label="Habits"></section>
+  <div class="tools">
+    <button id="install" hidden>Install app</button>
+    <button id="export">Back up data</button>
+    <button id="import">Restore backup</button>
+    <input id="file" type="file" accept="application/json" hidden>
+  </div>
+</main>
+<div class="add"><button id="new">Add habit</button></div>
+
+<dialog id="dlg">
+  <h3 id="dlgTitle">New habit</h3>
+  <input id="name" type="text" maxlength="60" placeholder="Read 10 pages" autocomplete="off">
+  <div class="row">
+    <button id="cancel" type="button">Cancel</button>
+    <button id="delete" type="button" class="del" hidden>Delete</button>
+    <button id="save" type="button" class="pri">Save</button>
+  </div>
+</dialog>
+
+<script>
+const K='tally.v1',$=s=>document.querySelector(s);
+let habits=load(),editing=null;
+function load(){try{return JSON.parse(localStorage.getItem(K))||[]}catch(e){return[]}}
+function save(){try{localStorage.setItem(K,JSON.stringify(habits))}catch(e){}}
+const key=d=>{const z=n=>String(n).padStart(2,'0');return d.getFullYear()+'-'+z(d.getMonth()+1)+'-'+z(d.getDate())};
+const addDays=(d,n)=>{const x=new Date(d);x.setDate(x.getDate()+n);return x};
+const esc=s=>s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function streak(h){let d=new Date();if(!h.done[key(d)])d=addDays(d,-1);let n=0;while(h.done[key(d)]){n++;d=addDays(d,-1)}return n}
+function best(h){let b=0,c=0,p=null;for(const k of Object.keys(h.done).sort()){const d=new Date(k+'T00:00');c=p&&Math.round((d-p)/864e5)===1?c+1:1;if(c>b)b=c;p=d}return b}
+function render(){
+  const t=key(new Date()),n=habits.filter(h=>h.done[t]).length;
+  $('#date').textContent=new Date().toLocaleDateString(undefined,{weekday:'long',day:'numeric',month:'long'});
+  $('#sum').textContent=habits.length?(n+' of '+habits.length+' done today'):'Nothing tracked yet';
+  $('#bar').style.width=habits.length?(n/habits.length*100)+'%':'0';
+  if(!habits.length){$('#list').innerHTML='<p class="empty">Add your first habit. Keep it small enough to do on your worst day.</p>';return}
+  $('#list').innerHTML=habits.map(h=>{
+    const s=streak(h);
+    const week=[6,5,4,3,2,1,0].map(i=>{const d=addDays(new Date(),-i),k=key(d),on=!!h.done[k];
+      return '<button class="day'+(on?' on':'')+(i?'':' today')+'" data-id="'+h.id+'" data-k="'+k+'" aria-pressed="'+on+'" aria-label="'+d.toLocaleDateString(undefined,{weekday:'long'})+'">'+d.toLocaleDateString(undefined,{weekday:'narrow'})+'</button>'}).join('');
+    return '<article class="habit'+(h.done[t]?' done':'')+'"><button class="check" data-id="'+h.id+'" data-k="'+t+'" aria-pressed="'+!!h.done[t]+'" aria-label="Mark '+esc(h.name)+' done today"></button>'+
+      '<div class="meta"><h2>'+esc(h.name)+'</h2><div class="stats"><span>'+s+'-day streak</span><span>Best '+best(h)+'</span></div><div class="week">'+week+'</div></div>'+
+      '<button class="more" data-edit="'+h.id+'" aria-label="Edit '+esc(h.name)+'">⋯</button></article>'}).join('');
+}
+$('#list').addEventListener('click',e=>{
+  const b=e.target.closest('button');if(!b)return;
+  if(b.dataset.edit){openDlg(b.dataset.edit);return}
+  if(b.dataset.k){const h=habits.find(x=>x.id===b.dataset.id);if(!h)return;
+    if(h.done[b.dataset.k])delete h.done[b.dataset.k];else{h.done[b.dataset.k]=1;navigator.vibrate&&navigator.vibrate(15)}
+    save();render()}
+});
+function openDlg(id){editing=id||null;const h=habits.find(x=>x.id===id);
+  $('#dlgTitle').textContent=h?'Edit habit':'New habit';$('#name').value=h?h.name:'';$('#delete').hidden=!h;$('#dlg').showModal();$('#name').focus()}
+$('#new').onclick=()=>openDlg();
+$('#cancel').onclick=()=>$('#dlg').close();
+$('#save').onclick=()=>{const v=$('#name').value.trim();if(!v){$('#name').focus();return}
+  if(editing){habits.find(x=>x.id===editing).name=v}else habits.push({id:Date.now().toString(36),name:v,done:{}});
+  save();render();$('#dlg').close()};
+$('#name').addEventListener('keydown',e=>{if(e.key==='Enter')$('#save').click()});
+$('#delete').onclick=()=>{if(confirm('Delete this habit and its history?')){habits=habits.filter(x=>x.id!==editing);save();render();$('#dlg').close()}};
+$('#export').onclick=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(habits,null,1)],{type:'application/json'}));a.download='tally-backup-'+key(new Date())+'.json';a.click()};
+$('#import').onclick=()=>$('#file').click();
+$('#file').onchange=async e=>{const f=e.target.files[0];if(!f)return;
+  try{const d=JSON.parse(await f.text());if(!Array.isArray(d))throw 0;habits=d.filter(h=>h&&h.id&&h.name&&h.done);save();render()}catch(x){alert('That file isn’t a Tally backup.')}e.target.value=''};
+let dp;addEventListener('beforeinstallprompt',e=>{e.preventDefault();dp=e;$('#install').hidden=false});
+$('#install').onclick=async()=>{if(dp){dp.prompt();await dp.userChoice;dp=null;$('#install').hidden=true}};
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)render()});
+if('serviceWorker' in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js').catch(()=>{});
+render();
+</script>
+</body>
+</html>
