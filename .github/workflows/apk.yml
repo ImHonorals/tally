@@ -7,29 +7,79 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 20
 
-      - name: Install Dependencies
-        run: npm install
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
 
-      - name: Build Web Assets
-        run: npm run build --if-present
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
 
-      - name: Show Directory Contents
-        run: ls -la
+      - name: Locate Web Files and Build Android Project
+        run: |
+          echo "=== Scanning repository structure ==="
+          find . -maxdepth 3 -not -path '*/.*'
 
-      - name: Upload Build Artifact
+          # Create a clean staging folder for the web app
+          mkdir -p /tmp/web_assets
+
+          # Automatically find where index.html lives
+          INDEX_FILE=$(find . -maxdepth 3 -name "index.html" -not -path "./node_modules/*" -not -path "./android/*" | head -n 1)
+
+          if [ -n "$INDEX_FILE" ]; then
+            SRC_DIR=$(dirname "$INDEX_FILE")
+            echo "Found web app inside: $SRC_DIR"
+            cp -r "$SRC_DIR"/* /tmp/web_assets/ 2>/dev/null || true
+          elif [ -f "package.json" ]; then
+            echo "Found package.json, running build..."
+            npm install
+            npm run build --if-present
+            for dir in dist build www public out; do
+              if [ -d "$dir" ] && [ -f "$dir/index.html" ]; then
+                cp -r "$dir"/* /tmp/web_assets/
+                break
+              fi
+            done
+          fi
+
+          # Check if web files were found; if the repo is completely empty, stop and alert clearly
+          if [ ! -f "/tmp/web_assets/index.html" ]; then
+            echo "::error::Your GitHub repository does not contain an index.html file! Please upload your Tally app files (index.html, JS, CSS) to the Code tab first."
+            exit 1
+          fi
+
+          # Create a fresh Capacitor Android builder in /tmp/apk_builder
+          mkdir -p /tmp/apk_builder/www
+          cp -r /tmp/web_assets/* /tmp/apk_builder/www/
+          cd /tmp/apk_builder
+
+          npm init -y
+          npm install @capacitor/core @capacitor/cli @capacitor/android
+          npx cap init "Tally" "com.imhonorals.tally" --web-dir www
+          npx cap add android
+          npx cap sync android
+
+          # Compile the actual Android APK
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug
+
+          # Copy the finished APK out for upload
+          mkdir -p "$GITHUB_WORKSPACE/output_apk"
+          cp app/build/outputs/apk/debug/app-debug.apk "$GITHUB_WORKSPACE/output_apk/Tally.apk"
+
+      - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: tally-built-app
-          path: |
-            dist/
-            build/
-            www/
-            index.html
+          name: Tally-Android-APK
+          path: output_apk/Tally.apk
+          if-no-files-found: error
