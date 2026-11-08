@@ -6,140 +6,301 @@
   <title>Tally — Minimal Habit Tracker</title>
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="icon" href="icon-192.png" />
-  <meta name="theme-color" content="#0b0f19" />
+  <meta name="theme-color" content="#070913" />
   <style>
     :root {
-      --bg: #0b0f19;
-      --surface: #131b2e;
-      --surface-hover: #1c2742;
+      --bg: #070913;
+      --bg-secondary: #0f1428;
+      --glass: rgba(19, 27, 46, 0.62);
+      --glass-strong: rgba(24, 34, 58, 0.85);
+      --glass-border: rgba(255, 255, 255, 0.09);
       --text: #f8fafc;
       --muted: #94a3b8;
-      --border: #1e293b;
       --accent: #7c83ff;
-      --accent-glow: rgba(124, 131, 255, 0.25);
+      --accent-2: #c084fc;
+      --accent-glow: rgba(124, 131, 255, 0.35);
+      --shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
     }
 
     [data-mode="light"] {
-      --bg: #f8fafc;
-      --surface: #ffffff;
-      --surface-hover: #f1f5f9;
+      --bg: #eef2ff;
+      --bg-secondary: #e0e7ff;
+      --glass: rgba(255, 255, 255, 0.72);
+      --glass-strong: rgba(255, 255, 255, 0.92);
+      --glass-border: rgba(15, 23, 42, 0.08);
       --text: #0f172a;
       --muted: #64748b;
-      --border: #e2e8f0;
+      --shadow: 0 16px 40px rgba(15, 23, 42, 0.08);
     }
 
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, sans-serif;
+      font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     }
 
     body {
       background-color: var(--bg);
       color: var(--text);
       min-height: 100vh;
+      overflow-x: hidden;
+      position: relative;
       display: flex;
       justify-content: center;
-      padding: 28px 16px 100px;
-      transition: background-color 0.25s ease, color 0.25s ease;
+      padding: 32px 16px 120px;
+      transition: background-color 0.35s ease, color 0.35s ease;
     }
 
-    .app-container {
+    /* Ambient Animated Background Environment */
+    .ambient-canvas {
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      overflow: hidden;
+      background: radial-gradient(circle at 50% 0%, var(--bg-secondary), var(--bg) 75%);
+    }
+
+    .orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(85px);
+      opacity: 0.42;
+      animation: floatOrb 16s infinite alternate ease-in-out;
+    }
+
+    .orb-1 {
+      width: 360px;
+      height: 360px;
+      background: var(--accent);
+      top: -110px;
+      left: -80px;
+    }
+
+    .orb-2 {
+      width: 320px;
+      height: 320px;
+      background: var(--accent-2);
+      bottom: 8%;
+      right: -90px;
+      animation-delay: -6s;
+    }
+
+    .orb-3 {
+      width: 240px;
+      height: 240px;
+      background: var(--accent);
+      top: 45%;
+      left: 50%;
+      transform: translateX(-50%);
+      opacity: 0.2;
+      animation-delay: -11s;
+    }
+
+    @keyframes floatOrb {
+      0% { transform: translate(0, 0) scale(1); }
+      100% { transform: translate(35px, 45px) scale(1.12); }
+    }
+
+    .app-shell {
       width: 100%;
-      max-width: 480px;
+      max-width: 540px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
     }
 
-    /* Top Header & Theme Bar */
-    .top-bar {
+    /* Glass Card Base */
+    .glass-panel {
+      background: var(--glass);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--glass-border);
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+    }
+
+    /* Top Environment & Theme Bar */
+    .env-bar {
       display: flex;
       justify-content: space-between;
-      align-items: flex-start;
-      margin-bottom: 18px;
-      gap: 12px;
+      align-items: center;
+      padding: 12px 16px;
+      border-radius: 999px;
     }
 
-    .date-label {
-      color: var(--muted);
-      font-size: 0.85rem;
-      font-weight: 500;
-      margin-bottom: 4px;
-    }
-
-    h1 {
-      font-size: 1.85rem;
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
       font-weight: 800;
+      font-size: 1.05rem;
       letter-spacing: -0.02em;
     }
 
-    .theme-controls {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      background: var(--surface);
-      padding: 6px 10px;
-      border-radius: 999px;
-      border: 1px solid var(--border);
+    .brand-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 12px var(--accent);
     }
 
-    .color-dot {
-      width: 18px;
-      height: 18px;
+    .theme-Cluster {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .swatch {
+      width: 20px;
+      height: 20px;
       border-radius: 50%;
       cursor: pointer;
       border: 2px solid transparent;
-      transition: transform 0.15s ease;
+      transition: transform 0.2s ease, border-color 0.2s ease;
     }
 
-    .color-dot.active {
-      transform: scale(1.2);
+    .swatch.active {
+      transform: scale(1.22);
       border-color: var(--text);
     }
 
-    .mode-btn {
-      background: none;
+    .custom-color-input {
+      width: 22px;
+      height: 22px;
       border: none;
-      color: var(--text);
+      padding: 0;
+      border-radius: 50%;
       cursor: pointer;
+      background: transparent;
+    }
+
+    .icon-btn {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--glass-border);
+      color: var(--text);
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: grid;
+      place-items: center;
       font-size: 0.95rem;
-      padding-left: 4px;
+      margin-left: 4px;
     }
 
-    /* Progress Bar */
-    .progress-track {
-      width: 100%;
-      height: 8px;
-      background: var(--surface);
-      border-radius: 999px;
-      overflow: hidden;
-      margin-bottom: 20px;
-      border: 1px solid var(--border);
+    /* Hero Dashboard Card */
+    .hero-card {
+      padding: 22px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
     }
 
-    .progress-fill {
-      height: 100%;
-      width: 0%;
-      background: var(--accent);
-      box-shadow: 0 0 12px var(--accent-glow);
-      transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    .hero-date {
+      font-size: 0.82rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--accent);
+      font-weight: 700;
+      margin-bottom: 6px;
     }
 
-    /* Action Pill Buttons */
+    .hero-title {
+      font-size: 1.65rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      margin-bottom: 6px;
+    }
+
+    .hero-sub {
+      font-size: 0.88rem;
+      color: var(--muted);
+    }
+
+    /* Circular SVG Progress Ring */
+    .ring-wrap {
+      position: relative;
+      width: 78px;
+      height: 78px;
+      flex-shrink: 0;
+    }
+
+    .ring-svg {
+      transform: rotate(-90deg);
+      width: 78px;
+      height: 78px;
+    }
+
+    .ring-bg {
+      fill: none;
+      stroke: var(--glass-border);
+      stroke-width: 7;
+    }
+
+    .ring-meter {
+      fill: none;
+      stroke: var(--accent);
+      stroke-width: 7;
+      stroke-linecap: round;
+      stroke-dasharray: 201;
+      stroke-dashoffset: 201;
+      transition: stroke-dashoffset 0.5s cubic-bezier(0.4, 0, 0.2, 1), stroke 0.3s ease;
+    }
+
+    .ring-label {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.95rem;
+      font-weight: 800;
+    }
+
+    /* Quick Stats Row */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    .stat-box {
+      padding: 14px;
+      border-radius: 18px;
+      text-align: center;
+    }
+
+    .stat-val {
+      font-size: 1.3rem;
+      font-weight: 800;
+      color: var(--text);
+    }
+
+    .stat-lbl {
+      font-size: 0.74rem;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    /* Action Pill Toolbar */
     .toolbar {
       display: flex;
       flex-wrap: wrap;
       gap: 8px;
-      margin-bottom: 24px;
     }
 
     .pill-btn {
-      background: var(--surface);
+      background: var(--glass);
+      backdrop-filter: blur(12px);
       color: var(--muted);
-      border: 1px solid var(--border);
-      padding: 8px 13px;
-      border-radius: 10px;
+      border: 1px solid var(--glass-border);
+      padding: 9px 14px;
+      border-radius: 12px;
       font-size: 0.8rem;
-      font-weight: 500;
+      font-weight: 600;
       cursor: pointer;
       transition: all 0.2s ease;
     }
@@ -147,384 +308,444 @@
     .pill-btn:hover {
       color: var(--text);
       border-color: var(--accent);
-      background: var(--surface-hover);
+      transform: translateY(-1px);
     }
 
     /* Empty State */
     .empty-state {
-      color: var(--muted);
-      font-size: 0.95rem;
-      line-height: 1.5;
-      padding: 28px 20px;
-      background: var(--surface);
-      border: 1px dashed var(--border);
-      border-radius: 16px;
+      padding: 36px 24px;
       text-align: center;
-      margin-bottom: 20px;
+      color: var(--muted);
+      line-height: 1.6;
     }
 
-    /* Habit Cards */
+    .empty-icon {
+      font-size: 2.2rem;
+      margin-bottom: 10px;
+    }
+
+    /* Habit List & Cards */
     .habit-list {
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 14px;
     }
 
     .habit-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 16px;
-      transition: transform 0.15s ease, border-color 0.2s ease;
+      padding: 18px;
+      transition: transform 0.2s ease, border-color 0.25s ease;
     }
 
     .habit-card:hover {
+      transform: translateY(-2px);
       border-color: var(--accent);
     }
 
-    .habit-header {
+    .habit-top {
       display: flex;
       justify-content: space-between;
-      align-items: center;
-      margin-bottom: 12px;
-    }
-
-    .habit-title-group {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
+      align-items: flex-start;
+      margin-bottom: 14px;
     }
 
     .habit-name {
-      font-size: 1.05rem;
-      font-weight: 600;
+      font-size: 1.08rem;
+      font-weight: 700;
+      margin-bottom: 6px;
     }
 
-    .habit-badges {
+    .badge-row {
       display: flex;
-      gap: 6px;
       flex-wrap: wrap;
+      gap: 6px;
     }
 
     .badge {
       font-size: 0.72rem;
-      padding: 2px 8px;
-      border-radius: 99px;
-      background: var(--bg);
+      font-weight: 600;
+      padding: 3px 9px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--glass-border);
       color: var(--muted);
-      border: 1px solid var(--border);
     }
 
-    .badge.streak {
+    .badge.accent {
       color: var(--accent);
       border-color: var(--accent);
-      font-weight: 600;
+      background: var(--accent-glow);
     }
 
-    .delete-btn {
-      background: none;
+    .del-btn {
+      background: transparent;
       border: none;
       color: var(--muted);
       cursor: pointer;
-      font-size: 1.1rem;
-      padding: 4px;
+      font-size: 1rem;
+      padding: 4px 8px;
+      border-radius: 8px;
     }
 
-    .delete-btn:hover {
-      color: #ef4444;
+    .del-btn:hover {
+      color: #f43f5e;
+      background: rgba(244, 63, 94, 0.12);
     }
 
-    /* 7-Day Circles */
-    .week-row {
+    /* 7-Day Interactive Strip */
+    .week-grid {
       display: grid;
       grid-template-columns: repeat(7, 1fr);
-      gap: 6px;
-      padding-top: 8px;
-      border-top: 1px solid var(--border);
+      gap: 8px;
+      padding-top: 12px;
+      border-top: 1px solid var(--glass-border);
     }
 
-    .day-col {
+    .day-cell {
       display: flex;
       flex-direction: column;
       align-items: center;
       gap: 6px;
     }
 
-    .day-name {
-      font-size: 0.7rem;
-      color: var(--muted);
-    }
-
-    .day-circle {
-      width: 34px;
-      height: 34px;
-      border-radius: 50%;
-      border: 2px solid var(--border);
-      background: var(--bg);
-      color: var(--text);
-      font-size: 0.75rem;
+    .day-lbl {
+      font-size: 0.68rem;
       font-weight: 600;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: all 0.2s ease;
+      color: var(--muted);
+      text-transform: uppercase;
     }
 
-    .day-circle.done {
+    .day-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 12px;
+      border: 1.5px solid var(--glass-border);
+      background: rgba(255, 255, 255, 0.03);
+      color: var(--text);
+      font-size: 0.78rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .day-btn:hover {
+      border-color: var(--accent);
+    }
+
+    .day-btn.done {
       background: var(--accent);
       border-color: var(--accent);
-      color: #0b0f19;
-      box-shadow: 0 0 10px var(--accent-glow);
+      color: #070913;
+      box-shadow: 0 4px 14px var(--accent-glow);
+      transform: scale(1.04);
     }
 
-    /* Floating Bottom Add Button */
-    .bottom-bar {
+    /* Floating Bottom Dock */
+    .dock {
       position: fixed;
-      bottom: 20px;
+      bottom: 22px;
       left: 0;
       right: 0;
       display: flex;
       justify-content: center;
       padding: 0 16px;
+      z-index: 20;
       pointer-events: none;
     }
 
-    .primary-btn {
+    .add-btn {
       pointer-events: auto;
       width: 100%;
-      max-width: 480px;
-      background: var(--accent);
-      color: #0b0f19;
-      font-weight: 700;
-      font-size: 1rem;
-      padding: 15px;
-      border-radius: 12px;
+      max-width: 540px;
+      padding: 16px;
+      border-radius: 16px;
       border: none;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: #070913;
+      font-size: 1rem;
+      font-weight: 800;
       cursor: pointer;
-      box-shadow: 0 8px 20px var(--accent-glow);
-      transition: transform 0.15s ease, opacity 0.15s ease;
+      box-shadow: 0 10px 28px var(--accent-glow);
+      transition: transform 0.15s ease, filter 0.2s ease;
     }
 
-    .primary-btn:active {
-      transform: scale(0.98);
+    .add-btn:hover {
+      filter: brightness(1.08);
+      transform: translateY(-1px);
     }
 
-    /* Add Habit Modal */
-    .modal-backdrop {
+    /* Modal Dialog */
+    .modal-overlay {
       position: fixed;
       inset: 0;
-      background: rgba(0, 0, 0, 0.65);
-      backdrop-filter: blur(4px);
+      background: rgba(3, 6, 16, 0.72);
+      backdrop-filter: blur(8px);
       display: none;
       align-items: center;
       justify-content: center;
       padding: 16px;
-      z-index: 50;
+      z-index: 100;
     }
 
-    .modal-backdrop.open {
+    .modal-overlay.open {
       display: flex;
     }
 
-    .modal {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 18px;
+    .modal-card {
+      background: var(--glass-strong);
+      border: 1px solid var(--glass-border);
+      border-radius: 24px;
       width: 100%;
-      max-width: 420px;
-      padding: 22px;
+      max-width: 440px;
+      padding: 24px;
+      box-shadow: var(--shadow);
     }
 
-    .modal h2 {
-      font-size: 1.25rem;
+    .modal-card h2 {
+      font-size: 1.3rem;
       margin-bottom: 16px;
     }
 
-    .field {
+    .form-group {
       margin-bottom: 14px;
     }
 
-    .field label {
+    .form-group label {
       display: block;
-      font-size: 0.82rem;
+      font-size: 0.8rem;
+      font-weight: 600;
       color: var(--muted);
       margin-bottom: 6px;
     }
 
-    .field input,
-    .field select {
+    .form-group input,
+    .form-group select {
       width: 100%;
-      padding: 11px 12px;
-      border-radius: 10px;
-      border: 1px solid var(--border);
-      background: var(--bg);
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: 1px solid var(--glass-border);
+      background: rgba(0, 0, 0, 0.22);
       color: var(--text);
       font-size: 0.95rem;
+      outline: none;
     }
 
-    .modal-actions {
+    [data-mode="light"] .form-group input,
+    [data-mode="light"] .form-group select {
+      background: rgba(15, 23, 42, 0.05);
+    }
+
+    .modal-footer {
       display: flex;
       justify-content: flex-end;
       gap: 10px;
-      margin-top: 18px;
+      margin-top: 20px;
     }
   </style>
 </head>
 <body>
-  <div class="app-container">
-    <div class="top-bar">
+  <!-- Ambient Floating Glow Environment -->
+  <div class="ambient-canvas">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
+
+  <div class="app-shell">
+    <!-- Top Environment & Color Bar -->
+    <header class="glass-panel env-bar">
+      <div class="brand">
+        <span class="brand-dot"></span>
+        <span>Tally</span>
+      </div>
+      <div class="theme-Cluster">
+        <div class="swatch" style="background:#7c83ff" data-accent="#7c83ff" data-accent2="#c084fc"></div>
+        <div class="swatch" style="background:#10b981" data-accent="#10b981" data-accent2="#34d399"></div>
+        <div class="swatch" style="background:#f43f5e" data-accent="#f43f5e" data-accent2="#fb7185"></div>
+        <div class="swatch" style="background:#f59e0b" data-accent="#f59e0b" data-accent2="#facc15"></div>
+        <div class="swatch" style="background:#06b6d4" data-accent="#06b6d4" data-accent2="#38bdf8"></div>
+        <input type="color" id="customColorPicker" class="custom-color-input" title="Pick any custom color" value="#7c83ff" />
+        <button class="icon-btn" id="modeBtn" title="Switch Dark / Light environment">🌙</button>
+      </div>
+    </header>
+
+    <!-- Hero Progress Card -->
+    <section class="glass-panel hero-card">
       <div>
-        <div class="date-label" id="dateDisplay"></div>
-        <h1 id="statusHeading">Nothing tracked yet</h1>
+        <div class="hero-date" id="dateText">SUNDAY, NOVEMBER 8</div>
+        <h1 class="hero-title" id="heroHeading">Nothing tracked yet</h1>
+        <p class="hero-sub" id="heroSub">Auto check-ins & reminders are ready.</p>
       </div>
-
-      <!-- Color & Light/Dark Switcher -->
-      <div class="theme-controls" title="Customize Accent & Theme">
-        <div class="color-dot" style="background:#7c83ff" data-color="#7c83ff"></div>
-        <div class="color-dot" style="background:#10b981" data-color="#10b981"></div>
-        <div class="color-dot" style="background:#f43f5e" data-color="#f43f5e"></div>
-        <div class="color-dot" style="background:#f59e0b" data-color="#f59e0b"></div>
-        <div class="color-dot" style="background:#06b6d4" data-color="#06b6d4"></div>
-        <button class="mode-btn" id="modeToggle" title="Toggle Light/Dark">🌙</button>
+      <div class="ring-wrap">
+        <svg class="ring-svg">
+          <circle class="ring-bg" cx="39" cy="39" r="32"></circle>
+          <circle class="ring-meter" id="ringMeter" cx="39" cy="39" r="32"></circle>
+        </svg>
+        <div class="ring-label" id="ringPercent">0%</div>
       </div>
-    </div>
+    </section>
 
-    <div class="progress-track">
-      <div class="progress-fill" id="progressBar"></div>
-    </div>
+    <!-- Environment Stats Strip -->
+    <section class="stats-grid">
+      <div class="glass-panel stat-box">
+        <div class="stat-val" id="statTotal">0</div>
+        <div class="stat-lbl">Active Habits</div>
+      </div>
+      <div class="glass-panel stat-box">
+        <div class="stat-val" id="statBestStreak">0 🔥</div>
+        <div class="stat-lbl">Best Streak</div>
+      </div>
+      <div class="glass-panel stat-box">
+        <div class="stat-val" id="statAutoCount">0 ⚡</div>
+        <div class="stat-lbl">Auto-Tracked</div>
+      </div>
+    </section>
 
+    <!-- Action Pill Bar -->
     <div class="toolbar">
-      <button class="pill-btn" id="installBtn">Install app</button>
-      <button class="pill-btn" id="notifyPermBtn">🔔 Enable reminders</button>
-      <button class="pill-btn" id="backupBtn">Back up data</button>
-      <button class="pill-btn" id="restoreBtn">Restore backup</button>
-      <input type="file" id="restoreInput" accept=".json" style="display:none" />
+      <button class="pill-btn" id="installBtn">📲 Install app</button>
+      <button class="pill-btn" id="enableRemindersBtn">🔔 Enable reminders</button>
+      <button class="pill-btn" id="backupBtn">💾 Back up data</button>
+      <button class="pill-btn" id="restoreBtn">📂 Restore backup</button>
+      <input type="file" id="restoreFile" accept=".json" style="display:none" />
     </div>
 
-    <div id="emptyState" class="empty-state">
-      Add your first habit. Keep it small enough to do on your worst day.
+    <!-- Empty State -->
+    <div id="emptyCard" class="glass-panel empty-state">
+      <div class="empty-icon">✨</div>
+      <strong>Add your first habit.</strong><br />
+      Keep it small enough to do on your worst day—or set it to check in automatically.
     </div>
 
-    <div class="habit-list" id="habitList"></div>
+    <!-- Habit List -->
+    <div class="habit-list" id="habitContainer"></div>
   </div>
 
-  <div class="bottom-bar">
-    <button class="primary-btn" id="openModalBtn">Add habit</button>
+  <!-- Floating Bottom Action Button -->
+  <div class="dock">
+    <button class="add-btn" id="openModalBtn">+ Add Habit</button>
   </div>
 
-  <!-- Modal for adding a habit with Auto Check-In and Reminder options -->
-  <div class="modal-backdrop" id="habitModal">
-    <div class="modal">
-      <h2>New Habit</h2>
-      <div class="field">
+  <!-- New Habit Modal -->
+  <div class="modal-overlay" id="habitModal">
+    <div class="modal-card">
+      <h2>Create Habit</h2>
+      <div class="form-group">
         <label>Habit Name</label>
-        <input type="text" id="habitNameInput" placeholder="e.g., Drink 2L of water, Read 10 pages" />
+        <input type="text" id="habitName" placeholder="e.g., Morning stretch, Drink water, Code 30m" />
       </div>
-      <div class="field">
-        <label>Check-In Mode (Manual or Automatic)</label>
+      <div class="form-group">
+        <label>Check-In Behavior (Automatic vs. Manual)</label>
         <select id="habitAutoMode">
-          <option value="on_open">Auto check-in when I open Tally each day</option>
-          <option value="on_time">Auto check-in at reminder time</option>
-          <option value="manual">Manual tap only</option>
+          <option value="on_open">⚡ Auto check-in as soon as I open Tally</option>
+          <option value="on_time">⏰ Auto check-in at my reminder time</option>
+          <option value="manual">🖐️ Manual check-in only</option>
         </select>
       </div>
-      <div class="field">
-        <label>Daily Reminder Time (Optional)</label>
-        <input type="time" id="habitReminderTime" />
+      <div class="form-group">
+        <label>Daily Reminder Notification Time (Optional)</label>
+        <input type="time" id="habitReminder" />
       </div>
-      <div class="modal-actions">
-        <button class="pill-btn" id="closeModalBtn">Cancel</button>
-        <button class="pill-btn" id="saveHabitBtn" style="background:var(--accent);color:#0b0f19;font-weight:700;">Save habit</button>
+      <div class="modal-footer">
+        <button class="pill-btn" id="cancelModalBtn">Cancel</button>
+        <button class="pill-btn" id="saveHabitBtn" style="background:var(--accent);color:#070913;border:none;font-weight:800;">Save Habit</button>
       </div>
     </div>
   </div>
 
   <script>
-    const STORAGE_KEY = "tally_habits_v2";
-    const THEME_KEY = "tally_theme_v2";
+    const HABITS_KEY = "tally_habits_v3";
+    const ENV_KEY = "tally_env_v3";
 
-    let habits = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
-    let theme = JSON.parse(localStorage.getItem(THEME_KEY) || '{"accent":"#7c83ff","mode":"dark"}');
+    // Migrate v2 habits automatically if present
+    let habits = JSON.parse(localStorage.getItem(HABITS_KEY) || localStorage.getItem("tally_habits_v2") || "[]");
+    let env = JSON.parse(localStorage.getItem(ENV_KEY) || '{"accent":"#7c83ff","accent2":"#c084fc","mode":"dark"}');
 
-    function todayISO(offsetDays = 0) {
+    function getISO(daysAgo = 0) {
       const d = new Date();
-      d.setDate(d.getDate() - offsetDays);
+      d.setDate(d.getDate() - daysAgo);
       return d.toISOString().split("T")[0];
     }
 
-    // 1. Apply Saved Color & Light/Dark Mode
-    function applyTheme() {
-      document.documentElement.style.setProperty("--accent", theme.accent);
-      document.documentElement.style.setProperty("--accent-glow", theme.accent + "44");
-      document.documentElement.setAttribute("data-mode", theme.mode);
-      document.getElementById("modeToggle").textContent = theme.mode === "dark" ? "🌙" : "☀️";
+    function applyEnvironment() {
+      document.documentElement.style.setProperty("--accent", env.accent);
+      document.documentElement.style.setProperty("--accent-2", env.accent2 || env.accent);
+      document.documentElement.style.setProperty("--accent-glow", env.accent + "55");
+      document.documentElement.setAttribute("data-mode", env.mode);
+      document.getElementById("modeBtn").textContent = env.mode === "dark" ? "🌙" : "☀️";
+      document.getElementById("customColorPicker").value = env.accent;
 
-      document.querySelectorAll(".color-dot").forEach(dot => {
-        dot.classList.toggle("active", dot.dataset.color === theme.accent);
+      document.querySelectorAll(".swatch").forEach(s => {
+        s.classList.toggle("active", s.dataset.accent.toLowerCase() === env.accent.toLowerCase());
       });
-      localStorage.setItem(THEME_KEY, JSON.stringify(theme));
+      localStorage.setItem(ENV_KEY, JSON.stringify(env));
     }
 
-    document.querySelectorAll(".color-dot").forEach(dot => {
-      dot.addEventListener("click", () => {
-        theme.accent = dot.dataset.color;
-        applyTheme();
+    document.querySelectorAll(".swatch").forEach(s => {
+      s.addEventListener("click", () => {
+        env.accent = s.dataset.accent;
+        env.accent2 = s.dataset.accent2;
+        applyEnvironment();
       });
     });
 
-    document.getElementById("modeToggle").addEventListener("click", () => {
-      theme.mode = theme.mode === "dark" ? "light" : "dark";
-      applyTheme();
+    document.getElementById("customColorPicker").addEventListener("input", e => {
+      env.accent = e.target.value;
+      env.accent2 = e.target.value;
+      applyEnvironment();
     });
 
-    // 2. Automatic Check-In Engine
+    document.getElementById("modeBtn").addEventListener("click", () => {
+      env.mode = env.mode === "dark" ? "light" : "dark";
+      applyEnvironment();
+    });
+
+    function save() {
+      localStorage.setItem(HABITS_KEY, JSON.stringify(habits));
+    }
+
     function runAutoCheckIns() {
-      const today = todayISO(0);
-      const now = new Date();
-      const currentHHMM = now.toTimeString().slice(0, 5);
-      let updated = false;
+      const today = getISO(0);
+      const nowTime = new Date().toTimeString().slice(0, 5);
+      let changed = false;
 
       habits.forEach(h => {
         if (!h.history) h.history = {};
-        // Auto check-in on app open
         if (h.autoMode === "on_open" && !h.history[today]) {
           h.history[today] = true;
-          updated = true;
+          changed = true;
         }
-        // Auto check-in once scheduled time is reached
-        if (h.autoMode === "on_time" && h.reminderTime && currentHHMM >= h.reminderTime && !h.history[today]) {
+        if (h.autoMode === "on_time" && h.reminderTime && nowTime >= h.reminderTime && !h.history[today]) {
           h.history[today] = true;
-          updated = true;
+          changed = true;
         }
       });
 
-      if (updated) {
-        saveHabits();
+      if (changed) {
+        save();
         render();
       }
     }
 
-    // 3. Daily Reminder Notification Engine
-    function checkReminders() {
-      const today = todayISO(0);
-      const now = new Date();
-      const currentHHMM = now.toTimeString().slice(0, 5);
+    function checkScheduledReminders() {
+      const today = getISO(0);
+      const nowTime = new Date().toTimeString().slice(0, 5);
 
       habits.forEach(h => {
-        if (h.reminderTime && h.reminderTime === currentHHMM && h.lastNotifiedDate !== today) {
-          h.lastNotifiedDate = today;
+        if (h.reminderTime && h.reminderTime === nowTime && h.lastNotified !== today) {
+          h.lastNotified = today;
           if (h.autoMode === "on_time") {
             h.history[today] = true;
           }
-          saveHabits();
+          save();
           render();
 
           if ("Notification" in window && Notification.permission === "granted") {
-            new Notification("Tally Habit Reminder", {
+            new Notification("Tally Reminder", {
               body: h.autoMode === "on_time"
-                ? `✅ "${h.name}" was automatically checked in for today!`
-                : `⏰ Time for your habit: "${h.name}"`,
+                ? `✅ "${h.name}" was automatically checked off!`
+                : `⏰ Time for "${h.name}"`,
               icon: "icon-192.png"
             });
           }
@@ -532,159 +753,164 @@
       });
     }
 
-    document.getElementById("notifyPermBtn").addEventListener("click", async () => {
+    document.getElementById("enableRemindersBtn").addEventListener("click", async () => {
       if (!("Notification" in window)) {
         alert("Notifications are not supported in this browser.");
         return;
       }
       const perm = await Notification.requestPermission();
       if (perm === "granted") {
-        document.getElementById("notifyPermBtn").textContent = "🔔 Reminders active";
-        new Notification("Tally Reminders Enabled", { body: "You'll be notified at your scheduled habit times." });
+        document.getElementById("enableRemindersBtn").textContent = "🔔 Reminders On";
+        new Notification("Tally Reminders Active", {
+          body: "We'll notify you at your scheduled habit times."
+        });
       }
     });
 
-    function calculateStreak(history) {
-      let streak = 0;
+    function calcStreak(history) {
+      let count = 0;
       for (let i = 0; i < 365; i++) {
-        const d = todayISO(i);
-        if (history && history[d]) {
-          streak++;
-        } else if (i > 0) {
-          break;
-        }
+        const d = getISO(i);
+        if (history && history[d]) count++;
+        else if (i > 0) break;
       }
-      return streak;
-    }
-
-    function saveHabits() {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(habits));
+      return count;
     }
 
     function render() {
       const now = new Date();
-      document.getElementById("dateDisplay").textContent = now.toLocaleDateString("en-US", {
+      document.getElementById("dateText").textContent = now.toLocaleDateString("en-US", {
         weekday: "long",
         month: "long",
         day: "numeric"
+      }).toUpperCase();
+
+      const today = getISO(0);
+      const list = document.getElementById("habitContainer");
+      const empty = document.getElementById("emptyCard");
+      list.innerHTML = "";
+
+      const total = habits.length;
+      const doneCount = habits.filter(h => h.history && h.history[today]).length;
+      const pct = total === 0 ? 0 : Math.round((doneCount / total) * 100);
+
+      // Update SVG Progress Ring
+      const circumference = 201;
+      const offset = circumference - (pct / 100) * circumference;
+      document.getElementById("ringMeter").style.strokeDashoffset = offset;
+      document.getElementById("ringPercent").textContent = `${pct}%`;
+
+      // Update Top Stats
+      let bestStreak = 0;
+      let autoCount = 0;
+      habits.forEach(h => {
+        const s = calcStreak(h.history);
+        if (s > bestStreak) bestStreak = s;
+        if (h.autoMode !== "manual") autoCount++;
       });
 
-      const listEl = document.getElementById("habitList");
-      const emptyEl = document.getElementById("emptyState");
-      const headingEl = document.getElementById("statusHeading");
-      const progressEl = document.getElementById("progressBar");
+      document.getElementById("statTotal").textContent = total;
+      document.getElementById("statBestStreak").textContent = `${bestStreak} 🔥`;
+      document.getElementById("statAutoCount").textContent = `${autoCount} ⚡`;
 
-      listEl.innerHTML = "";
-      const today = todayISO(0);
-
-      if (habits.length === 0) {
-        emptyEl.style.display = "block";
-        headingEl.textContent = "Nothing tracked yet";
-        progressEl.style.width = "0%";
+      if (total === 0) {
+        empty.style.display = "block";
+        document.getElementById("heroHeading").textContent = "Nothing tracked yet";
+        document.getElementById("heroSub").textContent = "Start small and watch your streak grow.";
         return;
       }
 
-      emptyEl.style.display = "none";
-      const doneToday = habits.filter(h => h.history && h.history[today]).length;
-      const pct = Math.round((doneToday / habits.length) * 100);
-      headingEl.textContent = `${doneToday} of ${habits.length} done today`;
-      progressEl.style.width = `${pct}%`;
+      empty.style.display = "none";
+      document.getElementById("heroHeading").textContent =
+        doneCount === total ? "All habits complete! 🎉" : `${doneCount} of ${total} completed`;
+      document.getElementById("heroSub").textContent =
+        doneCount === total ? "Awesome consistency today." : "Tap any day square to adjust or override.";
 
-      habits.forEach((h, index) => {
+      habits.forEach((h, idx) => {
         const card = document.createElement("div");
-        card.className = "habit-card";
-
-        const streak = calculateStreak(h.history);
-        const modeLabel =
+        card.className = "glass-panel habit-card";
+        const streak = calcStreak(h.history);
+        const modeTag =
           h.autoMode === "on_open" ? "⚡ Auto on open" :
-          h.autoMode === "on_time" ? "⚡ Auto at time" : "🖐️ Manual";
+          h.autoMode === "on_time" ? "⏰ Auto at time" : "🖐️ Manual";
 
-        let weekHTML = "";
+        let daysHTML = "";
         for (let i = 6; i >= 0; i--) {
-          const dateKey = todayISO(i);
+          const dKey = getISO(i);
           const dObj = new Date();
           dObj.setDate(dObj.getDate() - i);
-          const dayShort = dObj.toLocaleDateString("en-US", { weekday: "narrow" });
-          const dayNum = dObj.getDate();
-          const isDone = h.history && h.history[dateKey];
+          const dName = dObj.toLocaleDateString("en-US", { weekday: "short" }).slice(0, 2);
+          const dNum = dObj.getDate();
+          const done = h.history && h.history[dKey];
 
-          weekHTML += `
-            <div class="day-col">
-              <span class="day-name">${dayShort}</span>
-              <button class="day-circle ${isDone ? "done" : ""}" data-idx="${index}" data-date="${dateKey}">
-                ${isDone ? "✓" : dayNum}
+          daysHTML += `
+            <div class="day-cell">
+              <span class="day-lbl">${dName}</span>
+              <button class="day-btn ${done ? "done" : ""}" data-idx="${idx}" data-date="${dKey}">
+                ${done ? "✓" : dNum}
               </button>
             </div>
           `;
         }
 
         card.innerHTML = `
-          <div class="habit-header">
-            <div class="habit-title-group">
+          <div class="habit-top">
+            <div>
               <div class="habit-name">${h.name}</div>
-              <div class="habit-badges">
-                <span class="badge streak">🔥 ${streak} day streak</span>
-                <span class="badge">${modeLabel}</span>
-                ${h.reminderTime ? `<span class="badge">⏰ ${h.reminderTime}</span>` : ""}
+              <div class="badge-row">
+                <span class="badge accent">🔥 ${streak} day streak</span>
+                <span class="badge">${modeTag}</span>
+                ${h.reminderTime ? `<span class="badge">🔔 ${h.reminderTime}</span>` : ""}
               </div>
             </div>
-            <button class="delete-btn" data-del="${index}" title="Delete habit">✕</button>
+            <button class="del-btn" data-del="${idx}" title="Remove habit">✕</button>
           </div>
-          <div class="week-row">${weekHTML}</div>
+          <div class="week-grid">${daysHTML}</div>
         `;
-        listEl.appendChild(card);
+        list.appendChild(card);
       });
 
-      // Toggle any day circle (if user wants to override or fix past days)
-      document.querySelectorAll(".day-circle").forEach(btn => {
+      document.querySelectorAll(".day-btn").forEach(btn => {
         btn.addEventListener("click", () => {
-          const idx = Number(btn.dataset.idx);
+          const i = Number(btn.dataset.idx);
           const dt = btn.dataset.date;
-          habits[idx].history[dt] = !habits[idx].history[dt];
-          saveHabits();
+          habits[i].history[dt] = !habits[i].history[dt];
+          save();
           render();
         });
       });
 
-      document.querySelectorAll(".delete-btn").forEach(btn => {
+      document.querySelectorAll(".del-btn").forEach(btn => {
         btn.addEventListener("click", () => {
-          const idx = Number(btn.dataset.del);
-          habits.splice(idx, 1);
-          saveHabits();
+          habits.splice(Number(btn.dataset.del), 1);
+          save();
           render();
         });
       });
     }
 
-    // Modal handlers
+    // Modal Controls
     const modal = document.getElementById("habitModal");
     document.getElementById("openModalBtn").addEventListener("click", () => {
       modal.classList.add("open");
-      document.getElementById("habitNameInput").focus();
+      document.getElementById("habitName").focus();
     });
-    document.getElementById("closeModalBtn").addEventListener("click", () => {
+    document.getElementById("cancelModalBtn").addEventListener("click", () => {
       modal.classList.remove("open");
     });
 
     document.getElementById("saveHabitBtn").addEventListener("click", () => {
-      const name = document.getElementById("habitNameInput").value.trim();
+      const name = document.getElementById("habitName").value.trim();
       const autoMode = document.getElementById("habitAutoMode").value;
-      const reminderTime = document.getElementById("habitReminderTime").value;
+      const reminderTime = document.getElementById("habitReminder").value;
       if (!name) return;
 
-      habits.push({
-        name,
-        autoMode,
-        reminderTime,
-        history: {},
-        lastNotifiedDate: null
-      });
-
-      document.getElementById("habitNameInput").value = "";
-      document.getElementById("habitReminderTime").value = "";
+      habits.push({ name, autoMode, reminderTime, history: {}, lastNotified: null });
+      document.getElementById("habitName").value = "";
+      document.getElementById("habitReminder").value = "";
       modal.classList.remove("open");
 
-      saveHabits();
+      save();
       runAutoCheckIns();
       render();
     });
@@ -694,56 +920,51 @@
       const blob = new Blob([JSON.stringify(habits, null, 2)], { type: "application/json" });
       const a = document.createElement("a");
       a.href = URL.createObjectURL(blob);
-      a.download = `tally-backup-${todayISO(0)}.json`;
+      a.download = `tally-backup-${getISO(0)}.json`;
       a.click();
     });
 
     document.getElementById("restoreBtn").addEventListener("click", () => {
-      document.getElementById("restoreInput").click();
+      document.getElementById("restoreFile").click();
     });
 
-    document.getElementById("restoreInput").addEventListener("change", e => {
+    document.getElementById("restoreFile").addEventListener("change", e => {
       const file = e.target.files[0];
       if (!file) return;
       const reader = new FileReader();
       reader.onload = ev => {
         try {
           habits = JSON.parse(ev.target.result);
-          saveHabits();
+          save();
           render();
-        } catch (err) {
+        } catch {
           alert("Invalid backup file.");
         }
       };
       reader.readAsText(file);
     });
 
-    // PWA Install Prompt
+    // PWA Install
     let deferredPrompt;
     window.addEventListener("beforeinstallprompt", e => {
       e.preventDefault();
       deferredPrompt = e;
     });
-    document.getElementById("installBtn").addEventListener("click", async () => {
-      if (deferredPrompt) {
-        deferredPrompt.prompt();
-      } else {
-        alert("To install: click the Install icon in your browser's address bar or use 'Add to Home Screen' on mobile.");
-      }
+    document.getElementById("installBtn").addEventListener("click", () => {
+      if (deferredPrompt) deferredPrompt.prompt();
+      else alert("Click the Install icon in your browser address bar to install Tally.");
     });
 
-    // Service Worker Registration
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("sw.js").catch(() => {});
     }
 
-    // Initialize App
-    applyTheme();
+    applyEnvironment();
     runAutoCheckIns();
     render();
     setInterval(() => {
       runAutoCheckIns();
-      checkReminders();
+      checkScheduledReminders();
     }, 20000);
   </script>
 </body>
